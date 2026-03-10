@@ -10,45 +10,45 @@ permissions:
   pages: write
   id-token: write
 
-env:
-  DEPLOY_BASE_URL: ${{ vars.DEPLOY_BASE_URL}}
-
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
   build:
-    environment:
-      name: github-pages
-      url: ${{ steps.github-pages.output.url }}
     runs-on: ubuntu-latest
 
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
     steps:
-      - name: Clonar el Repositorio
+      - name: Clonar el repositorio
         uses: actions/checkout@v4
 
-      - name: Instalar Nodejs
+      - name: Instalar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+          cache: npm
 
-      - name: Instalar las Dependencias del Proyecto
+      - name: Instalar dependencias
         run: npm ci
 
-      - name: Dar permisos a vite
-        run: chmod +x node_modules/.bin/vite
+      - name: Arreglar permisos de binarios
+        run: chmod -R +x node_modules/.bin
 
-      - name: Compilar la página para distribución
-        run: npm run build
+      - name: Compilar proyecto con Vite
+        run: npx vite build
 
-      - name: Configura Github Pages
+      - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Subir los compilados (artefactos) a GP
+      - name: Subir artefactos de producción
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './dist'
+          path: ./dist
 
-      - name: Publicar Github Pages
+      - name: Desplegar a GitHub Pages
+        id: deploy
         uses: actions/deploy-pages@v4
